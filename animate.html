@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Title</title>
+    <style>
+
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        body,html{
+            width: 100%;
+            height: 100%;
+        }
+        #wrap{
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        #img1{
+            width: 15%;
+            position: absolute;
+            left: 5%;
+            z-index: 10;
+
+        }
+        #div1{
+            width: 25%;
+            height: 5%;
+            position: absolute;
+            top: 4%;
+            left: 16%;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            border-radius: 10px;
+            background-color: #1b1b1b;
+            box-shadow: 0 0 10px;
+            z-index: 5;
+        }
+        #div1 span{
+            position: relative;
+            top:70%;
+        }
+        #img2{
+            width: 20%;
+            position: absolute;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            top: 10%;
+            z-index: 5;
+        }
+        #text{
+            width: 50%;
+            font-size: 60px;
+            color: white;
+            position: absolute;
+            margin: 0 auto;
+            text-align: center;
+            left: 0;
+            right: 0;
+            top:50%;
+            z-index: 5;
+        }
+        #left{
+            width: 18%;
+            position: absolute;
+            left: 22%;
+            bottom: 10%;
+            z-index: 5;
+        }
+        #right{
+            width: 18%;
+            position: absolute;
+            right: 24%;
+            bottom: 10%;
+            z-index: 5;
+        }
+        #speed{
+            width: 17%;
+            position: absolute;
+            right: 2%;
+            bottom: 8%;
+            z-index: 5;
+        }
+
+
+
+    </style>
+</head>
+<body>
+<div id="wrap">
+    <img src="img/car/miaobiao.png" alt="" id="img1">
+    <div id="div1"><span>0:0:30</span></div>
+    <img src="img/car/1.png" alt="" id="img2">
+    <div id="text"><span>READY</span></div>
+    <img src="img/car/left_button.png" alt="" id="left">
+    <img src="img/car/right_button.png" alt="" id="right">
+    <img src="img/car/jiasu.png" alt="" id="speed">
+    <canvas id="myCanvas"></canvas>
+</div>
+
+
+<script src="js/jquery-2.2.3.min.js"></script>
+<script src="js/touch.min.js"></script>
+<script src="js/ajax.js"></script>
+<script type="text/javascript">
+
+    var canvas = document.getElementById("myCanvas");
+    var cxt = canvas.getContext("2d");
+    var oLeft = document.getElementById("left");
+    var oRight = document.getElementById("right");
+    var oSpeed = document.getElementById("speed");
+
+    canvas.width = document.documentElement.clientWidth;
+    canvas.height = document.documentElement.clientHeight;
+
+    //计过的障碍数
+    var count = 0;
+    //记录时间
+    var timeCount = 30;
+
+    $(function () {
+
+        //切换灯的图片
+        var s = 1;
+        //判断当灯消失时,canvas动画开始动
+        var isStart = false;
+        //游戏结束时,控制canvas不会在进行绘制
+        var isStop = false;
+        var timer = setInterval(function () {
+            s++;
+            $("#img2").attr("src","img/car/"+s+".png");
+            if (s == 3){
+                clearInterval(timer);
+                //让灯和文字消失
+                $("#img2").animate({
+                    top:"5%",
+                    opacity: 0
+                },500);
+                $("#text").animate({
+                    top:"40%",
+                    opacity: 0
+                },500);
+                setTimeout(function () {
+                    $("#img2").css("display","none");
+                    $("#text").css("display","none");
+                    isStart = true;
+                    timerStart();
+                },500);
+
+            }
+
+        },1000);
+
+        //计时器 全局变量
+        var timer3 = null;
+        function timerStart() {
+            timer3 = setInterval(function () {
+                timeCount--;
+                if (timeCount<10){
+                    $("#div1 span").html("0:0:0"+timeCount);
+                }else {
+                    $("#div1 span").html("0:0:"+timeCount);
+                }
+
+                if (timeCount == 0){
+                    clearInterval(timer3);
+                    isStop = true;
+
+            }
+
+            },1000);
+        }
+
+
+        //加载图片的函数
+        function loadImages(img, obj) {
+            //计算图片数量
+            var count = 0;
+            for(var name in img) {
+                count++;
+            }
+            var num = 0; //为了辅助计算加载进度的变量
+            var imgObj = {}; //存储加载后的图片对象
+            for(var name in img) {
+                var imgTemp = new Image();
+                imgTemp.src = img[name];
+                imgTemp.onload = (function(isName) {
+                    return function() {
+                        //加载完的图片对象扔到imgObj里
+                        //this指对应的imgTemp对象
+                        imgObj[isName] = this;
+                        //计算加载进度
+                        num++;
+                        //完成的时候回调的函数
+                        if(num == count) {
+                            obj.complete(imgObj);
+                        }
+
+                    }
+                })(name);
+            }
+        }
+
+        loadImages({
+            "bg":"img/car/saidao.png",
+            "car1":"img/car/mycar.png",
+            "car2":"img/car/mycar_add.png",
+            "startLine":"img/car/zhongdianxian.png",
+            "roadblock":"img/car/zhangai.png",
+            "carblock":"img/car/foe_car.png",
+            "carleft":"img/car/foe_l.png",
+            "carright":"img/car/foe_r.png"
+        },{
+            "complete":complete
+        });
+
+
+        function complete(imgObj){
+
+            //加速减速操作
+            //所有物体的初始速度
+            var speed = 2;
+            //点击加速减速按钮
+            touch.on($("#speed"),"tap",function () {
+                if ($("#speed").attr("src") == "img/car/jiasu.png"){
+                    $("#speed").attr("src","img/car/jiansu.png");
+                    car.img = imgObj.car2;
+                    car.height = imgObj.car1.height/1.8;
+                    speed = 4;
+
+                }else {
+                    $("#speed").attr("src","img/car/jiasu.png");
+                    car.img = imgObj.car1;
+                    car.height = imgObj.car1.height/2;
+                    speed = 2;
+                }
+
+
+            });
+
+            //背景图对象
+            var bg = imgObj.bg;
+            //背景的纵坐标
+            var picY = 0;
+            //画背景
+            function drawBg() {
+                picY += speed;
+                cxt.drawImage(bg, 0, picY, canvas.width, canvas.height);
+                cxt.drawImage(bg, 0, picY - canvas.height, canvas.width, canvas.height);
+                if(picY >= canvas.height) {
+                    picY = 0;
+                }
+            }
+            //画起始线
+            var startLine = imgObj.startLine;
+            var lineY = canvas.height/2;
+            function drawStartLine() {
+                lineY += speed;
+                cxt.drawImage(startLine, 33, lineY, canvas.width*0.82, canvas.height/15);
+            }
+
+            //创建小车对象
+            var car = {
+                "img":imgObj.car1,
+                "x": canvas.width / 2 - imgObj.car1.width/4,
+                "y": canvas.height/1.7,
+                "width": imgObj.car1.width/2,
+                "height": imgObj.car1.height/2
+            };
+            //画小车
+            car.drawCar = function () {
+                cxt.drawImage(this.img, this.x, this.y, this.width, this.height);
+            }
+
+            //随机函数
+            function rand(min, max) {
+                return parseInt(Math.random() * (max - min + 1) + min);
+            }
+
+            //接收路障对象的数组
+            var blockArr = [];
+            //路障构造函数
+            function Roadblock() {
+                    this.img = imgObj.roadblock,
+                    this.width = this.img.width,
+                    this.height = this.img.height,
+                    this.x = rand(canvas.width/12,canvas.width/1.3),
+                    this.y = -this.height,
+                    this.type = 1;
+            }
+            //修改路障类型
+            Roadblock.prototype.changeType = function (typeNum) {
+                this.type = typeNum;
+                switch(this.type){
+                    case 1:
+                        //路锥
+                        break;
+                    case 2:
+                        this.img = imgObj.carblock;
+                                this.width = this.img.width/2;
+                                this.height = this.img.height/2;
+                                this.x = rand(canvas.width/12,canvas.width/1.3);
+                                this.y = -this.height;
+                                this.car_door = rand(0,1)==1?imgObj.carleft : imgObj.carright;
+                    default:
+                        break;
+                }
+            }
+            //路障移动
+            Roadblock.prototype.moveBlock = function() {
+                this.y += speed;
+            }
+            //绘制路障
+            Roadblock.prototype.drawBlock = function () {
+
+
+                if (this.type == 2 && this.y>= canvas.height/3){
+                    if (this.car_door == imgObj.carright){
+                        cxt.drawImage(this.car_door,this.x+this.width/1.4,this.y+this.height/3,this.car_door.width,this.car_door.height);
+                    }else {
+                        cxt.drawImage(this.car_door,this.x-this.width/1.2,this.y+this.height/3,this.car_door.width,this.car_door.height);
+                    }
+
+                }
+                cxt.drawImage(this.img,this.x,this.y,this.width,this.height);
+            }
+            //清除路障
+            Roadblock.prototype.clearBlock = function () {
+                if (this.y >= canvas.height) {
+                    return true;
+                }else{
+                    return false;
+                }
+            }
+
+            //碰撞检测
+            function colide (obj1,obj2) {
+                //对象一
+                var left1 = obj1.x;
+                var right1 = left1 + obj1.width;
+                var top1 = obj1.y;
+                var bottom1= obj1.height + top1;
+                //对象二
+                var left2 = obj2.x +10;
+                var right2 = obj2.x + obj2.width -5;
+                var top2 = obj2.y;
+                var bottom2 = obj2.height + top2 -5;
+                //将车门的宽高也加上
+                if(obj2.type == 2) {
+                    if (obj2.car_door == imgObj.carleft) {
+                        var left_door = obj2.x - obj2.width / 1.2;
+
+                    } else {
+                        var left_door = obj2.x + obj2.width / 1.4;
+                    }
+                    var right_door = left_door + obj2.car_door.width;
+                    var top_door = obj2.y + obj2.height / 3;
+                    var bottom_door = obj2.y + obj2.car_door.height;
+                    if (left_door < right1 && right_door > left1 && top1 < bottom_door && bottom1 > top_door) {
+                        return true;
+                    }
+                }
+                if (right1 > left2 && left1 < right2 && bottom1 > top2 && top1 < bottom2) {
+                    return true;
+                } else{
+                    return false;
+                }
+
+
+                }
+
+            var temp = 0;
+            function drawAll(){
+                if (isStart){
+                    cxt.clearRect(0, 0, canvas.width, canvas.height);
+                    drawBg();
+                    //超出canvas就不再画起始线
+                    if (lineY <= canvas.height){
+                        drawStartLine();
+                    }
+
+                    car.drawCar();
+
+                    //创建路障对象
+                    if (temp % (200/speed) == 0){
+                        var roadBlock = new Roadblock();
+                        if (temp% (600/speed) == 0){
+                            roadBlock.changeType(2);
+                        }
+                        blockArr.push(roadBlock);
+                    }
+                    //遍历路障对象,并移动和绘画
+                    for (var i = 0;i < blockArr.length;i++){
+                        blockArr[i].moveBlock();
+                        if (blockArr[i].clearBlock()){
+                            blockArr.splice(i,1);
+                            i--;
+                            count++;
+                        }else {
+                            blockArr[i].drawBlock();
+                        }
+
+                    }
+                    //判断车是否与路障相撞 若相撞游戏结束
+                    for (var i = 0;i < blockArr.length;i++) {
+                        if (colide(car,blockArr[i])) {
+                            clearInterval(timer3);
+                            isStop = true;
+                            //游戏结束,和后台交互数据,并把排名相关的数据存到cookie里,跳转到新页面后,在新页面使用cookie里的数据
+
+
+                            alert("GAME OVER!");
+
+                        }
+                    }
+
+                    temp++;
+                }else {
+                    //灯不消失,图静止不动
+                    cxt.clearRect(0, 0, canvas.width, canvas.height);
+                    cxt.drawImage(bg, 0, 0, canvas.width, canvas.height);
+                    cxt.drawImage(startLine, 33, lineY, canvas.width*0.82, canvas.height/15);
+                    car.drawCar();
+                }
+                if (!isStop){
+                    window.requestAnimationFrame(drawAll);
+                }
+            }
+            drawAll();
+
+            //点击左右按钮让小车动
+            var timer1 = null;
+            var timer2 = null;
+            oLeft.addEventListener("touchstart",function (ev) {
+                //防止两个按钮同时按下,计时器发生叠加
+                clearInterval(timer2);
+                if (isStart){
+                    timer1 = setInterval(function () {
+                        if (car.x <= canvas.width/11){
+                            car.x = canvas.width/11;
+                        }
+                        car.x -= 2;
+                    },10)
+                }
+                var ev = ev || window.event;
+                ev.preventDefault();
+            },false);
+            oLeft.addEventListener("touchend",function (ev) {
+                var ev = ev || window.event;
+                ev.preventDefault();
+                clearInterval(timer1);
+            },false);
+
+            oRight.addEventListener("touchstart",function (ev) {
+                clearInterval(timer1);
+                if (isStart){
+                    timer2 = setInterval(function () {
+                        if (car.x >= canvas.width/1.3){
+                            car.x = canvas.width/1.3;
+                        }
+                        car.x += 2;
+                    },10)
+                }
+                var ev = ev || window.event;
+                ev.preventDefault();
+            },false);
+            oRight.addEventListener("touchend",function (ev) {
+                var ev = ev || window.event;
+                ev.preventDefault();
+                clearInterval(timer2);
+            },false);
+
+
+        }
+
+        window.addEventListener("touchmove",function (ev) {
+            var ev = ev || window.event;
+            ev.preventDefault();
+        })
+
+
+
+    })
+
+</script>
+
+
+
+</body>
+</html>
